@@ -7,11 +7,14 @@ import { generateCloudFormationTemplate, generateTerraformTemplate } from "./clo
 import { insertChatSessionSchema, insertMessageSchema, insertArchitectureSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Create a demo user for this session
-  const demoUser = await storage.createUser({
-    username: "demo_user",
-    password: "demo_password"
-  });
+  // Get or create a demo user for this session
+  let demoUser = await storage.getUserByUsername("demo_user");
+  if (!demoUser) {
+    demoUser = await storage.createUser({
+      username: "demo_user",
+      password: "demo_password"
+    });
+  }
 
   // Get all chat sessions for the demo user
   app.get("/api/chat-sessions", async (req, res) => {
