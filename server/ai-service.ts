@@ -1,10 +1,55 @@
-import OpenAI from "openai";
+import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
 import type { ArchitectureRecommendation } from "@shared/schema";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
+// the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
+const bedrock = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION || "us-east-1",
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
+    sessionToken: process.env.AWS_SESSION_TOKEN
+  }
 });
+
+async function invokeClaude(messages: any[]): Promise<string> {
+  // Format messages for Claude
+  const systemMessage = messages.find(m => m.role === "system");
+  const conversationMessages = messages.filter(m => m.role !== "system");
+  
+  const claudeMessages = conversationMessages.map(msg => ({
+    role: msg.role === "user" ? "user" : "assistant",
+    content: msg.content
+  }));
+
+  const requestBody = {
+    anthropic_version: "bedrock-2023-05-31",
+    max_tokens: 4000,
+    system: systemMessage?.content || "",
+    messages: claudeMessages,
+    temperature: 0.7
+  };
+
+  const command = new InvokeModelCommand({
+    modelId: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    body: JSON.stringify(requestBody),
+    contentType: "application/json",
+    accept: "application/json"
+  });
+
+  try {
+    const response = await bedrock.send(command);
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    
+    if (responseBody.content && responseBody.content[0] && responseBody.content[0].text) {
+      return responseBody.content[0].text;
+    }
+    
+    throw new Error("Invalid response format from Claude");
+  } catch (error) {
+    console.error("Error calling Claude via Bedrock:", error);
+    throw new Error(`Failed to call Claude: ${(error as Error).message}`);
+  }
+}
 
 export async function generateArchitectureRecommendation(
   userRequirements: string,
@@ -51,7 +96,7 @@ When responding, always provide your recommendations in the following JSON forma
   "cloudFormationTemplate": "YAML CloudFormation template as string"
 }
 
-Base your recommendations on AWS best practices, Well-Architected Framework principles, and realistic pricing data.`;
+Base your recommendations on AWS best practices, Well-Architected Framework principles, and realistic pricing data. Return only valid JSON, no additional text.`;
 
   const messages = [
     { role: "system", content: systemPrompt },
@@ -60,20 +105,17 @@ Base your recommendations on AWS best practices, Well-Architected Framework prin
   ];
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: messages as any,
-      response_format: { type: "json_object" },
-      temperature: 0.7,
-      max_tokens: 4000,
-    });
-
-    const content = response.choices[0].message.content;
+    const content = await invokeClaude(messages);
+    
     if (!content) {
-      throw new Error("No response from OpenAI");
+      throw new Error("No response from Claude");
     }
 
-    const recommendation = JSON.parse(content) as ArchitectureRecommendation;
+    // Extract JSON from response (in case there's extra text)
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonContent = jsonMatch ? jsonMatch[0] : content;
+    
+    const recommendation = JSON.parse(jsonContent) as ArchitectureRecommendation;
     
     // Validate the response structure
     if (!recommendation.services || !recommendation.totalMonthlyCost || !recommendation.architecture) {
@@ -83,7 +125,7 @@ Base your recommendations on AWS best practices, Well-Architected Framework prin
     return recommendation;
   } catch (error) {
     console.error("Error generating architecture recommendation:", error);
-    throw new Error(`Failed to generate architecture recommendation: ${error.message}`);
+    throw new Error(`Failed to generate architecture recommendation: ${(error as Error).message}`);
   }
 }
 
@@ -96,25 +138,27 @@ Current architecture: ${JSON.stringify(currentArchitecture)}
 Optimization goals: ${optimizationGoals}
 
 Provide an optimized version that reduces costs while maintaining or improving performance and reliability.
-Return the same JSON format as the original architecture.`;
+Return the same JSON format as the original architecture. Return only valid JSON, no additional text.`;
+
+  const messages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: "Please optimize this architecture based on the goals provided." }
+  ];
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: systemPrompt }],
-      response_format: { type: "json_object" },
-      temperature: 0.5,
-      max_tokens: 4000,
-    });
-
-    const content = response.choices[0].message.content;
+    const content = await invokeClaude(messages);
+    
     if (!content) {
-      throw new Error("No response from OpenAI");
+      throw new Error("No response from Claude");
     }
 
-    return JSON.parse(content) as ArchitectureRecommendation;
+    // Extract JSON from response (in case there's extra text)
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonContent = jsonMatch ? jsonMatch[0] : content;
+
+    return JSON.parse(jsonContent) as ArchitectureRecommendation;
   } catch (error) {
     console.error("Error optimizing architecture:", error);
-    throw new Error(`Failed to optimize architecture: ${error.message}`);
+    throw new Error(`Failed to optimize architecture: ${(error as Error).message}`);
   }
 }

@@ -4,8 +4,7 @@ import ChatSidebar from "@/components/chat-sidebar";
 import ChatMessages from "@/components/chat-messages";
 import ArchitecturePanel from "@/components/chat-architecture-panel";
 import { Button } from "@/components/ui/button";
-import { SiAmazonaws } from "react-icons/si";
-import { Plus, User } from "lucide-react";
+import { Plus, User, Cloud } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function ChatPage() {
@@ -34,7 +33,7 @@ export default function ChatPage() {
       <header className="aws-blue shadow-lg">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <SiAmazonaws className="text-[hsl(var(--aws-orange))] text-2xl" />
+            <Cloud className="text-[hsl(var(--aws-orange))] text-2xl" />
             <h1 className="text-xl font-semibold text-white">Architecture Assistant</h1>
           </div>
           <div className="flex items-center space-x-4">
