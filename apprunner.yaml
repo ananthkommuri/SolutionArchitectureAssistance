@@ -4,9 +4,11 @@ build:
   commands:
     build:
       - echo "Installing dependencies"
-      - npm install
+      - npm ci
       - echo "Building application"
       - npm run build
+      - echo "Setting up database"
+      - npm run db:push
 run:
   runtime-version: 18
   command: npm start
