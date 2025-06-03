@@ -12,7 +12,7 @@ import {
   type Architecture,
   type InsertArchitecture
 } from "@shared/schema";
-import { db } from "./db";
+import { getDb } from "./db";
 import { eq } from "drizzle-orm";
 
 export interface IStorage {
@@ -38,16 +38,19 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
+    const db = getDb();
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
+    const db = getDb();
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
+    const db = getDb();
     const [user] = await db
       .insert(users)
       .values(insertUser)
@@ -56,11 +59,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getChatSession(id: number): Promise<ChatSession | undefined> {
+    const db = getDb();
     const [session] = await db.select().from(chatSessions).where(eq(chatSessions.id, id));
     return session || undefined;
   }
 
   async getChatSessionsByUserId(userId: number): Promise<ChatSession[]> {
+    const db = getDb();
     return await db
       .select()
       .from(chatSessions)
@@ -69,6 +74,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
+    const db = getDb();
     const [session] = await db
       .insert(chatSessions)
       .values(insertSession)
@@ -77,6 +83,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateChatSession(id: number, updates: Partial<ChatSession>): Promise<ChatSession | undefined> {
+    const db = getDb();
     const [session] = await db
       .update(chatSessions)
       .set({ ...updates, updatedAt: new Date() })
@@ -86,6 +93,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMessagesByChatId(chatId: number): Promise<Message[]> {
+    const db = getDb();
     return await db
       .select()
       .from(messages)
@@ -94,6 +102,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const db = getDb();
     const [message] = await db
       .insert(messages)
       .values({
@@ -105,6 +114,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getArchitectureByMessageId(messageId: number): Promise<Architecture | undefined> {
+    const db = getDb();
     const [architecture] = await db
       .select()
       .from(architectures)
@@ -113,6 +123,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createArchitecture(insertArchitecture: InsertArchitecture): Promise<Architecture> {
+    const db = getDb();
     const [architecture] = await db
       .insert(architectures)
       .values({
