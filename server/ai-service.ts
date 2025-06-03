@@ -2,14 +2,21 @@ import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedroc
 import type { ArchitectureRecommendation } from "@shared/schema";
 
 // the newest Anthropic model is "claude-3-5-sonnet-20241022" which was released October 22, 2024
-const bedrock = new BedrockRuntimeClient({
-  region: process.env.AWS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
-    sessionToken: process.env.AWS_SESSION_TOKEN
+
+function createBedrockClient() {
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    throw new Error("AWS credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.");
   }
-});
+
+  return new BedrockRuntimeClient({
+    region: process.env.AWS_REGION || "us-east-1",
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      sessionToken: process.env.AWS_SESSION_TOKEN
+    }
+  });
+}
 
 async function invokeClaude(messages: any[]): Promise<string> {
   // Format messages for Claude
@@ -37,6 +44,7 @@ async function invokeClaude(messages: any[]): Promise<string> {
   });
 
   try {
+    const bedrock = createBedrockClient();
     const response = await bedrock.send(command);
     const responseBody = JSON.parse(new TextDecoder().decode(response.body));
     
