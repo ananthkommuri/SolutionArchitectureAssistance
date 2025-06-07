@@ -124,4 +124,104 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Memory storage implementation for deployments without database access
+export class MemoryStorage implements IStorage {
+  private users: User[] = [];
+  private chatSessions: ChatSession[] = [];
+  private messages: Message[] = [];
+  private architectures: Architecture[] = [];
+  private nextUserId = 1;
+  private nextChatId = 1;
+  private nextMessageId = 1;
+  private nextArchId = 1;
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.find(u => u.id === id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return this.users.find(u => u.username === username);
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const user: User = {
+      id: this.nextUserId++,
+      username: insertUser.username,
+      password: insertUser.password
+    };
+    this.users.push(user);
+    return user;
+  }
+
+  async getChatSession(id: number): Promise<ChatSession | undefined> {
+    return this.chatSessions.find(s => s.id === id);
+  }
+
+  async getChatSessionsByUserId(userId: number): Promise<ChatSession[]> {
+    return this.chatSessions.filter(s => s.userId === userId);
+  }
+
+  async createChatSession(insertSession: InsertChatSession): Promise<ChatSession> {
+    const session: ChatSession = {
+      id: this.nextChatId++,
+      userId: insertSession.userId,
+      title: insertSession.title,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.chatSessions.push(session);
+    return session;
+  }
+
+  async updateChatSession(id: number, updates: Partial<ChatSession>): Promise<ChatSession | undefined> {
+    const index = this.chatSessions.findIndex(s => s.id === id);
+    if (index === -1) return undefined;
+    
+    this.chatSessions[index] = { 
+      ...this.chatSessions[index], 
+      ...updates, 
+      updatedAt: new Date() 
+    };
+    return this.chatSessions[index];
+  }
+
+  async getMessagesByChatId(chatId: number): Promise<Message[]> {
+    return this.messages.filter(m => m.chatSessionId === chatId);
+  }
+
+  async createMessage(insertMessage: InsertMessage): Promise<Message> {
+    const message: Message = {
+      id: this.nextMessageId++,
+      chatSessionId: insertMessage.chatSessionId,
+      role: insertMessage.role,
+      content: insertMessage.content,
+      metadata: insertMessage.metadata,
+      createdAt: new Date()
+    };
+    this.messages.push(message);
+    return message;
+  }
+
+  async getArchitectureByMessageId(messageId: number): Promise<Architecture | undefined> {
+    return this.architectures.find(a => a.messageId === messageId);
+  }
+
+  async createArchitecture(insertArchitecture: InsertArchitecture): Promise<Architecture> {
+    const architecture: Architecture = {
+      id: this.nextArchId++,
+      messageId: insertArchitecture.messageId,
+      services: insertArchitecture.services,
+      totalCost: insertArchitecture.totalCost,
+      cloudFormationTemplate: insertArchitecture.cloudFormationTemplate ?? null,
+      diagram: insertArchitecture.diagram,
+      createdAt: new Date()
+    };
+    this.architectures.push(architecture);
+    return architecture;
+  }
+}
+
+// Use database storage if available, otherwise fall back to memory storage
+export const storage = process.env.DATABASE_URL 
+  ? new DatabaseStorage() 
+  : new MemoryStorage();
