@@ -8,7 +8,6 @@ build:
       - echo "Building application"
       - npm run build
 run:
-  runtime-version: 16
   command: npm start
   network:
     port: 8080
