@@ -147,7 +147,7 @@ ${recommendation.optimizations.map(opt =>
       });
     } catch (error) {
       console.error("Error in chat message:", error);
-      res.status(500).json({ error: `Failed to process message: ${error.message}` });
+      res.status(500).json({ error: `Failed to process message: ${error instanceof Error ? error.message : 'Unknown error'}` });
     }
   });
 
@@ -178,7 +178,7 @@ ${recommendation.optimizations.map(opt =>
       res.json(optimizedRecommendation);
     } catch (error) {
       console.error("Error optimizing architecture:", error);
-      res.status(500).json({ error: `Failed to optimize architecture: ${error.message}` });
+      res.status(500).json({ error: `Failed to optimize architecture: ${error instanceof Error ? error.message : 'Unknown error'}` });
     }
   });
 
