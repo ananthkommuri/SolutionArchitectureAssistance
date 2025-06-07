@@ -7,6 +7,11 @@ import { generateCloudFormationTemplate, generateTerraformTemplate } from "./clo
 import { insertChatSessionSchema, insertMessageSchema, insertArchitectureSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for Kubernetes
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "healthy", timestamp: new Date().toISOString() });
+  });
+
   // Get or create a demo user for this session
   let demoUser = await storage.getUserByUsername("demo_user");
   if (!demoUser) {
