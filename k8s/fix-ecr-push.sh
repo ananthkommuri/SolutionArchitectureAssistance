@@ -73,7 +73,7 @@ for i in {1..3}; do
     sleep 10
 done
 
-# Create App Runner service role if it doesn't exist
+# Create App Runner service role with correct trust policy
 echo "Creating App Runner service role..."
 cat > apprunner-role-trust-policy.json << EOF
 {
@@ -99,12 +99,13 @@ aws iam attach-role-policy \
   --policy-arn arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess 2>/dev/null || echo "Policy attached"
 
 # Wait for role propagation
-sleep 10
+echo "Waiting for IAM role propagation..."
+sleep 30
 
 # Get role ARN
 ROLE_ARN="arn:aws:iam::$AWS_ACCOUNT_ID:role/AppRunnerECRAccessRole"
 
-# Create App Runner service
+# Create App Runner service with authentication configuration
 echo "Creating App Runner service..."
 cat > apprunner-service.json << EOF
 {
