@@ -56,10 +56,9 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = Number(process.env.PORT) || 5000;
+  // Serve the app on the PORT environment variable or default ports
+  // App Runner expects port 8080, other deployments may use 5000
+  const port = Number(process.env.PORT) || (process.env.NODE_ENV === "production" ? 8080 : 5000);
   const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
   
   if (process.env.NODE_ENV === "production") {
