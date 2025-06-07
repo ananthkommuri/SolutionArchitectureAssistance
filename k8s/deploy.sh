@@ -4,11 +4,12 @@
 
 set -e
 
-# Configuration
+# Configuration - UPDATE THESE VALUES
 CLUSTER_NAME="aws-architect-cluster"
 REGION="us-east-1"
 IMAGE_NAME="aws-architect"
-ECR_REPOSITORY="your-account-id.dkr.ecr.us-east-1.amazonaws.com/aws-architect"
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+ECR_REPOSITORY="$AWS_ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/aws-architect"
 NAMESPACE="aws-architect"
 
 echo "Starting deployment to EKS cluster: $CLUSTER_NAME"
