@@ -1,16 +1,14 @@
 version: 1.0
-runtime: nodejs18
+runtime: nodejs16
 build:
   commands:
     build:
       - echo "Installing dependencies"
-      - npm ci
+      - npm install
       - echo "Building application"
       - npm run build
-      - echo "Setting up database"
-      - npm run db:push
 run:
-  runtime-version: 18
+  runtime-version: 16
   command: npm start
   network:
     port: 8080
