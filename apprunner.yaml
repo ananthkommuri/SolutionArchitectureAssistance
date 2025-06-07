@@ -3,12 +3,9 @@ runtime: nodejs16
 build:
   commands:
     build:
-      - echo "Installing dependencies"
       - npm install
-      - echo "Installing tsx globally"
-      - npm install -g tsx
 run:
-  command: tsx server/index.ts
+  command: npx tsx server/index.ts
   network:
     port: 8080
     env: PORT
