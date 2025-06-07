@@ -24,6 +24,13 @@ aws ecr create-repository \
 
 # Step 2: Create EKS Cluster
 echo "☸️  Creating EKS cluster (this takes 10-15 minutes)..."
+
+# Check if SSH key exists, create if not
+if [ ! -f ~/.ssh/id_rsa.pub ]; then
+    echo "🔑 SSH key not found, creating one..."
+    ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -q
+fi
+
 eksctl create cluster \
     --name $CLUSTER_NAME \
     --region $AWS_REGION \
